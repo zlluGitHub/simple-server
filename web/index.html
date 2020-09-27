@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>国家金融银行政策知识检索服务平台</title>
+    <link rel="stylesheet" type="text/css" href="http://unpkg.com/view-design/dist/styles/iview.css">
+    <!-- <link rel="stylesheet" type="text/css" href="./css/iview.css"> -->
+    <link rel="stylesheet" href="./css/style.css">
+    <script type="text/javascript" src="./js/vue.min.js"></script>
+    <script type="text/javascript" src="./js/iview.min.js"></script>
+    <script type="text/javascript" src="./js/axios.min.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <header>
+            <div class="header-warp">
+                <div class="header-left">
+                    <h1>国家金融银行政策知识检索服务平台</h1>
+                    <p>China Bank Policy Service (CBPS)</p>
+                </div>
+                <div class="header-right">
+                    <ul>
+                        <li>
+                            <Tooltip content="首页" placement="bottom" theme="light">
+                                <Icon type="ios-home-outline" />
+                            </Tooltip>
+                        </li>
+                        <li>
+                            <Tooltip content="刷新页面" placement="bottom" theme="light">
+                                <Icon type="ios-refresh-circle-outline" />
+                            </Tooltip>
+
+                        </li>
+                        <li>
+                            <Tooltip content="全屏" placement="bottom" theme="light">
+                                <Icon type="md-expand" />
+                            </Tooltip>
+
+                        </li>
+                        <li>
+                            <Tooltip content="系统设置" placement="bottom" theme="light">
+                                <Icon type="ios-construct-outline" />
+                            </Tooltip>
+
+                        </li>
+                        <li>
+                            <Icon type="md-contact"></Icon>
+                            </Icon><span>Admain</span>
+                        </li>
+
+                    </ul>
+                </div>
+            </div>
+        </header>
+        <section>
+            <div class="main">
+                <div class="query-warp">
+                    <!-- <div class="item">
+                        <label>关键词：</label>
+                        <i-input v-model="keyword" placeholder="请输入关键词..." @on-enter="handleSearch" style="width: 200px" />
+                    </div>
+                    <div class="item">
+                        <label>发布机构：</label>
+                        <i-input v-model="value" placeholder="请输入机构名称..." style="width: 200px" />
+                    </div>
+                    <div class="item">
+                        <label>区域级别：</label>
+                        <i-select v-model="country" clearable style="width:200px">
+                            <i-option v-for="item in countryList" :value="item.value" :key="item.value">{{ item.label }}
+                            </i-option>
+                        </i-select>
+                    </div>
+                    <div class="item">
+                        <label>性质：</label>
+                        <i-select v-model="model1" clearable style="width:200px">
+                            <i-option v-for="item in natureList" :value="item.value" :key="item.value">{{ item.label }}
+                            </i-option>
+                        </i-select>
+                    </div>-->
+                    <i-input search enter-button  v-model="keyword"  @on-search="handleSearch" style="width: 50%" placeholder="请输入关键词..." />
+                    <!-- <i-input v-model="keyword" placeholder="请输入关键词..." @on-enter="handleSearch" style="width: 200px"></i-input>
+                    <i-button type="primary" icon="md-search" @click="handleSearch">检索</i-button> -->
+                    <!-- <div class="button-warp">
+                        <i-button type="primary" icon="md-search" @click="handleSearch">普通检索</i-button>
+                        <i-button type="warning" icon="md-search" @click="handleSearch">高级检索</i-button>
+                    </div> -->
+                </div>
+                <div class="table-warp">
+                    <ul>
+                        <li v-for="item in tabelData" :key="item.doc_id">
+                            <div class="title" v-html="item.titleRule">
+                            </div>
+                            <div class="content" v-html="item.contentRule"></div>
+                            <p>
+                                <span>发布时间：{{item.create_time}}</span>
+                                <span>文本大小：{{item.size}}</span>
+                                <span @click="handleShowContent(item)" class="text-buttom">查看全文</span>
+                                <span @click="handleDownload(item)" class="text-buttom">全文下载</span>
+                            </p>
+
+                        </li>
+                    </ul>
+                    <!-- <i-table border :columns="columns" :data="tabelData">
+                        <div slot-scope="{ row }" slot="name">
+                            <Tooltip max-width="200" class="title" :content="row.title" placement="top">
+                                <strong class="title">{{ row.title }}</strong>
+                            </Tooltip>
+
+                        </div>
+                        <div slot-scope="{ row, index }" slot="action">
+                            <i-button type="warning" ghost size="small" style="margin-right: 5px"
+                                @click="handleDownload(row)">
+                                <Icon type="md-cloud-download"></Icon>下载
+                            </i-button>
+                        </div>
+                    </i-table> -->
+                </div>
+                <div class="page-warp">
+                    <Page :total="tatal" show-sizer @on-change="handleCurrentPage"
+                        @on-page-size-change="handlePageSize" />
+                </div>
+                <Modal v-model="isModalOpen" width="80%" :title="itemData.title" footer-hide class="modal-warp">
+
+                    <div style="text-align:center">
+                        <i-input v-model="itemData.content" type="textarea" :rows="26" readonly placeholder=" " />
+                    </div>
+
+                </Modal>
+            </div>
+        </section>
+    </div>
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                isModalOpen: false,
+                itemData: "",
+                value: "",
+                currentPage: 1,
+                pageSize: 10,
+                tatal: 0,
+                keyword: "金融",
+                natureList: [
+                    {
+                        value: '正式发文',
+                        label: '正式发文'
+                    },
+                    {
+                        value: '征求意见稿',
+                        label: '征求意见稿'
+                    },
+                    {
+                        value: '通知',
+                        label: '通知'
+                    }
+                ],
+                country: "",
+                countryList: [
+                    {
+                        value: '国家级',
+                        label: '国家级'
+                    },
+                    {
+                        value: '省级',
+                        label: '省级'
+                    },
+                    {
+                        value: '市级',
+                        label: '市级'
+                    },
+                    {
+                        value: '县级',
+                        label: '县级'
+                    }
+                ],
+                model1: '',
+                columns: [
+                    {
+                        title: '文件名',
+                        slot: 'name'
+                    },
+                    {
+                        title: '文件后缀名',
+                        key: 'extension',
+                        width: 120,
+                    },
+                    {
+                        title: '文件大小',
+                        key: 'size',
+                        width: 120,
+                    },
+                    {
+                        title: '上传时间',
+                        key: 'create_time',
+                        width: 200,
+                    },
+                    {
+                        title: '文件下载',
+                        slot: 'action',
+                        width: 150,
+                        align: 'center'
+                    }
+                ],
+                tabelData: []
+            },
+            // watch: {
+            //     keyword(val) {
+            //         let _this = this
+            //         this.tabelData.forEach(function (item) {
+            //             item.titleRule = _this.ruleText(item.title, val);
+            //             item.contentRule = _this.ruleContent(item.content, val);
+            //         });
+            //     }
+            // },
+            created() {
+                this.getData();
+            },
+            methods: {
+                getData() {
+                    var _this = this;
+                    var params = {
+                        pageSize: this.pageSize,
+                        currentPage: this.currentPage
+                    }
+                    if (this.keyword) {
+                        params.keyword = this.keyword
+                    }
+
+                    axios.get('/api/document/retrieval/search', { params: params }).then(function (response) {
+                        // console.log(response);
+                        if (response.data) {
+                            let data = response.data.data;
+                            _this.tabelData = data.map(function (item) {
+                                item.titleRule = _this.ruleText(item.title, _this.keyword);
+                                item.contentRule = _this.ruleContent(item.content, _this.keyword);
+                                return item
+                            });
+                            _this.tatal = response.data.pageInfo.totalElements
+                        }
+                    }).catch(function (error) {
+                        console.log(error);
+                    });
+                },
+                handleCurrentPage: function (v) {
+                    this.currentPage = v;
+                    this.getData();
+                },
+                handlePageSize: function (v) {
+                    this.pageSize = v;
+                    this.getData();
+                },
+                handleSearch: function () {
+                    this.getData();
+                },
+                handleShowContent: function (row) {
+                    this.itemData = row
+                    this.isModalOpen = !this.isModalOpen
+                },
+                handleDownload: function (row) {
+
+                    window.open(row.download_url);
+                },
+                handleRefresh: function (v) {
+                    this.keyword = "小微企业"
+                    this.currentPage = 1
+                    this.pageSize = 10
+                    this.getData();
+                },
+                ruleContent(contentString, searchValue) {
+                    if (contentString.indexOf(searchValue) <= -1) {
+                        return contentString;
+                    }
+                    let splicingStr = ""
+                    let contentArr = contentString.split(/\。|\，/g)
+                    contentArr.forEach(function (item) {
+                        if (item.indexOf(searchValue) > -1) {
+                            splicingStr = item + "..." + splicingStr
+                        }
+                    });
+                    return this.ruleText(splicingStr, searchValue)
+                },
+                ruleText(contentString, searchValue) {
+                    if (!contentString) {
+                        return '';
+                    }
+                    if (searchValue && searchValue.length > 0) {
+                        // 匹配关键字正则
+                        let replaceReg = new RegExp(searchValue, 'g');
+                        // 高亮替换v-html值
+                        let replaceString = '<span class="search-text">' + searchValue + '</span>';
+                        // 开始替换
+                        contentString = contentString.replace(replaceReg, replaceString);
+                    }
+                    return contentString;
+                }
+            }
+        })
+    </script>
+</body>
+
+</html>
